@@ -1,0 +1,7 @@
+Open app.js and find function setupMyPc(). Immediately after the line that adds the scanNow click listener, insert this code:\n\n// ADD this line inside setupMyPc(), after the scanNow click listener:
+if (new URL(location.href).searchParams.get('scan') === '1') {
+  const u = new URL(location.href);
+  u.searchParams.delete('scan');
+  history.replaceState({}, '', u.pathname + u.search + u.hash);
+  setTimeout(scanComputer, 500);
+}
