@@ -1,272 +1,58 @@
+/* PC Hub 3.0 — browser UI. Hardware scanning and Steam lookups use the local Windows companion. */
 'use strict';
-
-const GPU_LIST = [
-  { name: 'AMD Radeon RX 460 4GB', score: 20 },
-  { name: 'NVIDIA GTX 1650', score: 38 },
-  { name: 'NVIDIA GTX 1660 Super', score: 57 },
-  { name: 'NVIDIA RTX 2060', score: 68 },
-  { name: 'NVIDIA RTX 3060', score: 100 },
-  { name: 'NVIDIA RTX 4060', score: 116 },
-  { name: 'NVIDIA RTX 4070', score: 172 },
-  { name: 'NVIDIA RTX 4080', score: 235 }
+const BRIDGE = 'http://127.0.0.1:8765';
+const $ = (id) => document.getElementById(id);
+const GPU_DB = [
+['NVIDIA','GeForce GT 710',2,3],['NVIDIA','GeForce GT 730',2,5],['NVIDIA','GeForce GTX 750',1,15],['NVIDIA','GeForce GTX 750 Ti',2,18],['NVIDIA','GeForce GTX 760',2,22],['NVIDIA','GeForce GTX 770',2,25],['NVIDIA','GeForce GTX 780',3,29],['NVIDIA','GeForce GTX 780 Ti',3,32],['NVIDIA','GeForce GTX 950',2,22],['NVIDIA','GeForce GTX 960',2,26],['NVIDIA','GeForce GTX 970',4,34],['NVIDIA','GeForce GTX 980',4,40],['NVIDIA','GeForce GTX 980 Ti',6,45],
+['NVIDIA','GeForce GT 1030',2,12],['NVIDIA','GeForce GTX 1050',2,24],['NVIDIA','GeForce GTX 1050 Ti',4,29],['NVIDIA','GeForce GTX 1060 3GB',3,36],['NVIDIA','GeForce GTX 1060 6GB',6,41],['NVIDIA','GeForce GTX 1070',8,51],['NVIDIA','GeForce GTX 1070 Ti',8,56],['NVIDIA','GeForce GTX 1080',8,62],['NVIDIA','GeForce GTX 1080 Ti',11,72],
+['NVIDIA','GeForce GTX 1630',4,22],['NVIDIA','GeForce GTX 1650',4,32],['NVIDIA','GeForce GTX 1650 Super',4,39],['NVIDIA','GeForce GTX 1660',6,44],['NVIDIA','GeForce GTX 1660 Super',6,48],['NVIDIA','GeForce GTX 1660 Ti',6,50],
+['NVIDIA','GeForce RTX 2060',6,55],['NVIDIA','GeForce RTX 2060 Super',8,61],['NVIDIA','GeForce RTX 2070',8,64],['NVIDIA','GeForce RTX 2070 Super',8,69],['NVIDIA','GeForce RTX 2080',8,72],['NVIDIA','GeForce RTX 2080 Super',8,77],['NVIDIA','GeForce RTX 2080 Ti',11,83],
+['NVIDIA','GeForce RTX 3050 6GB',6,41],['NVIDIA','GeForce RTX 3050 8GB',8,46],['NVIDIA','GeForce RTX 3060 8GB',8,56],['NVIDIA','GeForce RTX 3060 12GB',12,61],['NVIDIA','GeForce RTX 3060 Ti',8,70],['NVIDIA','GeForce RTX 3070',8,77],['NVIDIA','GeForce RTX 3070 Ti',8,82],['NVIDIA','GeForce RTX 3080 10GB',10,92],['NVIDIA','GeForce RTX 3080 12GB',12,97],['NVIDIA','GeForce RTX 3080 Ti',12,101],['NVIDIA','GeForce RTX 3090',24,104],['NVIDIA','GeForce RTX 3090 Ti',24,109],
+['NVIDIA','GeForce RTX 4060',8,64],['NVIDIA','GeForce RTX 4060 Ti 8GB',8,72],['NVIDIA','GeForce RTX 4060 Ti 16GB',16,73],['NVIDIA','GeForce RTX 4070',12,88],['NVIDIA','GeForce RTX 4070 Super',12,98],['NVIDIA','GeForce RTX 4070 Ti',12,105],['NVIDIA','GeForce RTX 4070 Ti Super',16,112],['NVIDIA','GeForce RTX 4080',16,125],['NVIDIA','GeForce RTX 4080 Super',16,130],['NVIDIA','GeForce RTX 4090',24,155],
+['NVIDIA','GeForce RTX 5050',8,66],['NVIDIA','GeForce RTX 5060',8,82],['NVIDIA','GeForce RTX 5060 Ti 8GB',8,90],['NVIDIA','GeForce RTX 5060 Ti 16GB',16,92],['NVIDIA','GeForce RTX 5070',12,111],['NVIDIA','GeForce RTX 5070 Ti',16,132],['NVIDIA','GeForce RTX 5080',16,153],['NVIDIA','GeForce RTX 5090',32,195],
+['AMD','Radeon HD 7750',1,7],['AMD','Radeon HD 7770',1,9],['AMD','Radeon HD 7850',2,12],['AMD','Radeon HD 7870',2,16],['AMD','Radeon HD 7950',3,20],['AMD','Radeon HD 7970',3,23],['AMD','Radeon R7 260X',2,13],['AMD','Radeon R9 270X',2,17],['AMD','Radeon R9 280X',3,22],['AMD','Radeon R9 290',4,27],['AMD','Radeon R9 390',8,32],['AMD','Radeon R9 390X',8,35],
+['AMD','Radeon RX 460',4,24],['AMD','Radeon RX 470',4,29],['AMD','Radeon RX 480',8,32],['AMD','Radeon RX 550',2,12],['AMD','Radeon RX 560',4,20],['AMD','Radeon RX 570',4,27],['AMD','Radeon RX 580',8,32],['AMD','Radeon RX 590',8,36],['AMD','Radeon RX 5500 XT',8,39],['AMD','Radeon RX 5600 XT',6,53],['AMD','Radeon RX 5700',8,57],['AMD','Radeon RX 5700 XT',8,62],
+['AMD','Radeon RX 6400',4,24],['AMD','Radeon RX 6500 XT',4,33],['AMD','Radeon RX 6600',8,55],['AMD','Radeon RX 6600 XT',8,61],['AMD','Radeon RX 6650 XT',8,66],['AMD','Radeon RX 6700',10,67],['AMD','Radeon RX 6700 XT',12,75],['AMD','Radeon RX 6750 XT',12,81],['AMD','Radeon RX 6800',16,88],['AMD','Radeon RX 6800 XT',16,97],['AMD','Radeon RX 6900 XT',16,105],['AMD','Radeon RX 6950 XT',16,110],
+['AMD','Radeon RX 7600',8,61],['AMD','Radeon RX 7600 XT',16,65],['AMD','Radeon RX 7700 XT',12,82],['AMD','Radeon RX 7800 XT',16,93],['AMD','Radeon RX 7900 GRE',16,100],['AMD','Radeon RX 7900 XT',20,118],['AMD','Radeon RX 7900 XTX',24,133],['AMD','Radeon RX 9060 XT',16,93],['AMD','Radeon RX 9070',16,123],['AMD','Radeon RX 9070 XT',16,139],
+['Intel','Arc A310',4,14],['Intel','Arc A380',6,22],['Intel','Arc A580',8,39],['Intel','Arc A750',8,48],['Intel','Arc A770 8GB',8,52],['Intel','Arc A770 16GB',16,54],['Intel','Arc B570',10,62],['Intel','Arc B580',12,73]
+].map(([brand,name,vram,score])=>({brand,name,vram,score}));
+const CPU_DB = [
+['Intel','Core i3-6100',2,4,18],['Intel','Core i5-6400',4,4,25],['Intel','Core i5-6500',4,4,27],['Intel','Core i5-6600K',4,4,31],['Intel','Core i7-6700K',4,8,37],['Intel','Core i7-7700K',4,8,42],['Intel','Core i5-7400',4,4,28],['Intel','Core i5-7500',4,4,30],['Intel','Core i5-7600K',4,4,33],['Intel','Core i3-8100',4,4,29],['Intel','Core i5-8400',6,6,37],['Intel','Core i5-8500',6,6,39],['Intel','Core i5-8600K',6,6,43],['Intel','Core i7-8700',6,12,49],['Intel','Core i7-8700K',6,12,52],['Intel','Core i5-9400F',6,6,38],['Intel','Core i5-9600K',6,6,46],['Intel','Core i7-9700K',8,8,54],['Intel','Core i9-9900K',8,16,62],['Intel','Core i3-10100F',4,8,37],['Intel','Core i5-10400F',6,12,49],['Intel','Core i5-10600K',6,12,55],['Intel','Core i7-10700K',8,16,68],['Intel','Core i9-10900K',10,20,76],['Intel','Core i5-11400F',6,12,57],['Intel','Core i7-11700K',8,16,77],['Intel','Core i9-11900K',8,16,79],['Intel','Core i3-12100F',4,8,63],['Intel','Core i5-12400F',6,12,76],['Intel','Core i5-12600K',10,16,86],['Intel','Core i7-12700K',12,20,101],['Intel','Core i9-12900K',16,24,113],['Intel','Core i5-13400F',10,16,90],['Intel','Core i5-13600K',14,20,105],['Intel','Core i7-13700K',16,24,123],['Intel','Core i9-13900K',24,32,141],['Intel','Core i5-14400F',10,16,94],['Intel','Core i7-14700K',20,28,132],['Intel','Core i9-14900K',24,32,148],['AMD','Ryzen 5 1600',6,12,25],['AMD','Ryzen 5 2600',6,12,35],['AMD','Ryzen 5 3600',6,12,49],['AMD','Ryzen 5 5500',6,12,56],['AMD','Ryzen 5 5600',6,12,69],['AMD','Ryzen 5 5600X',6,12,73],['AMD','Ryzen 5 5700X',8,16,78],['AMD','Ryzen 5 7500F',6,12,78],['AMD','Ryzen 5 7600',6,12,85],['AMD','Ryzen 5 7600X',6,12,88],['AMD','Ryzen 5 9600X',6,12,105],['AMD','Ryzen 7 1700',8,16,34],['AMD','Ryzen 7 2700X',8,16,44],['AMD','Ryzen 7 3700X',8,16,60],['AMD','Ryzen 7 5700X3D',8,16,95],['AMD','Ryzen 7 5800X',8,16,80],['AMD','Ryzen 7 5800X3D',8,16,100],['AMD','Ryzen 7 7700X',8,16,108],['AMD','Ryzen 7 7800X3D',8,16,128],['AMD','Ryzen 7 9800X3D',8,16,150],['AMD','Ryzen 9 3900X',12,24,74],['AMD','Ryzen 9 5900X',12,24,94],['AMD','Ryzen 9 5950X',16,32,105],['AMD','Ryzen 9 7900X',12,24,128],['AMD','Ryzen 9 7950X',16,32,150],['AMD','Ryzen 9 9950X',16,32,162]
+].map(([brand,name,cores,threads,score])=>({brand,name,cores,threads,score}));
+const FEATURED = [
+['Counter-Strike 2',730,'Competitive FPS'],['Cyberpunk 2077',1091500,'Open-world RPG'],['Grand Theft Auto V',271590,'Open-world action'],['Red Dead Redemption 2',1174180,'Open-world adventure'],['Elden Ring',1245620,'Action RPG'],['PUBG: BATTLEGROUNDS',578080,'Battle royale'],['Apex Legends',1172470,'Battle royale'],['Baldur’s Gate 3',1086940,'RPG'],['Forza Horizon 5',1551360,'Racing'],['Hogwarts Legacy',990080,'Action RPG'],['The Witcher 3',292030,'Open-world RPG'],['Dota 2',570,'MOBA'],['Warframe',230410,'Action'],['Black Myth: Wukong',2358720,'Action RPG'],['Helldivers 2',553850,'Co-op shooter'],['Sekiro: Shadows Die Twice',814380,'Action'],['Monster Hunter: World',582010,'Action RPG'],['Horizon Forbidden West',2420110,'Action adventure'],['God of War',1593500,'Action adventure'],['Resident Evil 4',2050650,'Survival horror']
 ];
-const CPU_LIST = [
-  { name: 'Intel Core i5-9400F', score: 72 },
-  { name: 'Intel Core i5-12400F', score: 100 },
-  { name: 'Intel Core i5-13400F', score: 112 },
-  { name: 'AMD Ryzen 5 5600', score: 98 },
-  { name: 'AMD Ryzen 7 5800X', score: 125 },
-  { name: 'AMD Ryzen 7 7800X3D', score: 138 }
-];
-const GAME_MODELS = {
-  valorant: { label: 'Valorant', baseline: 230, cpuWeight: 0.78 },
-  gtav: { label: 'Grand Theft Auto V', baseline: 105, cpuWeight: 0.48 },
-  fortnite: { label: 'Fortnite', baseline: 95, cpuWeight: 0.48 },
-  minecraft: { label: 'Minecraft Java (no shaders)', baseline: 155, cpuWeight: 0.72 },
-  spiderman: { label: 'Marvel’s Spider-Man Remastered', baseline: 72, cpuWeight: 0.30 },
-  cs2: { label: 'Counter-Strike 2', baseline: 175, cpuWeight: 0.70 }
-};
 
-const byId = id => document.getElementById(id);
-const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
-let importedReport = null;
-
-function normalizedName(value) {
-  return String(value || '').replace(/\s+/g, ' ').trim();
-}
-
-function inferGpuScore(name) {
-  const n = normalizedName(name).toLowerCase();
-  const exact = GPU_LIST.find(g => n.includes(g.name.toLowerCase().replace('nvidia ', '').replace('amd ', '')) || g.name.toLowerCase().includes(n));
-  if (exact) return exact.score;
-  const rtx = n.match(/rtx\s*(\d{3,4})/);
-  if (rtx) {
-    const model = Number(rtx[1]);
-    if (model >= 4090) return 285;
-    if (model >= 4080) return 235;
-    if (model >= 4070) return 172;
-    if (model >= 4060) return 116;
-    if (model >= 3090) return 210;
-    if (model >= 3080) return 185;
-    if (model >= 3070) return 145;
-    if (model >= 3060) return 100;
-    if (model >= 2080) return 115;
-    if (model >= 2070) return 90;
-    if (model >= 2060) return 68;
-  }
-  const gtx = n.match(/gtx\s*(\d{3,4})/);
-  if (gtx) {
-    const model = Number(gtx[1]);
-    if (model >= 1080) return 75;
-    if (model >= 1070) return 65;
-    if (model >= 1660) return 57;
-    if (model >= 1650) return 38;
-    if (model >= 1060) return 50;
-  }
-  if (n.includes('rx 7')) return 150;
-  if (n.includes('rx 6')) return 95;
-  if (n.includes('rx 5')) return 55;
-  if (n.includes('rx 4')) return 30;
-  if (n.includes('radeon graphics') || n.includes('uhd graphics') || n.includes('vega')) return 18;
-  return 65; // Neutral fallback for unknown devices; this is not a measured score.
-}
-
-function inferCpuScore(name) {
-  const n = normalizedName(name).toLowerCase();
-  const exact = CPU_LIST.find(c => n.includes(c.name.toLowerCase()) || c.name.toLowerCase().includes(n));
-  if (exact) return exact.score;
-  const intel = n.match(/i[3579][ -]?(\d{4,5})/);
-  if (intel) {
-    const gen = Number(intel[1].slice(0, -3));
-    const tier = Number(n.match(/i([3579])/)?.[1] || 5);
-    return clamp(45 + gen * 4 + tier * 5, 55, 145);
-  }
-  const ryzen = n.match(/ryzen\s*[3579]\s*(\d{4,5})/);
-  if (ryzen) return clamp(65 + Number(ryzen[1].slice(0, 1)) * 14, 70, 145);
-  if (n.includes('xeon')) return 75;
-  return 80; // Neutral fallback for unknown devices; this is not a measured score.
-}
-
-function setSelectToHardware(selectId, name, score, list) {
-  const select = byId(selectId);
-  if (!select || !name) return;
-  const normalized = normalizedName(name);
-  const match = Array.from(select.options).find(o => normalizedName(o.textContent).toLowerCase() === normalized.toLowerCase());
-  if (match) {
-    select.value = match.value;
-    return;
-  }
-  const option = document.createElement('option');
-  option.value = String(score);
-  option.textContent = `${normalized} (detected)`;
-  option.dataset.detected = 'true';
-  select.insertBefore(option, select.firstChild);
-  select.value = option.value;
-}
-
-function formatGB(value) {
-  return Number.isFinite(Number(value)) ? `${Number(value).toFixed(Number(value) % 1 ? 1 : 0)} GB` : 'Not reported';
-}
-
-function safeText(value, fallback = 'Not reported') {
-  const text = normalizedName(value);
-  return text || fallback;
-}
-
-function makeHardwareItem(label, value, detail = '') {
-  const box = document.createElement('div');
-  box.className = 'hardware-item';
-  const title = document.createElement('span');
-  title.textContent = label;
-  const strong = document.createElement('strong');
-  strong.textContent = value;
-  box.append(title, strong);
-  if (detail) {
-    const small = document.createElement('small');
-    small.textContent = detail;
-    box.append(small);
-  }
-  return box;
-}
-
-function validateReport(data) {
-  if (!data || typeof data !== 'object' || data.schemaVersion !== 1 || data.source !== 'PC Benchmark Hub Scanner') {
-    throw new Error('This does not look like a PC Benchmark Hub scanner report. Run the latest scanner and import its JSON file.');
-  }
-  if (!data.cpu || !Array.isArray(data.gpus) || !data.memory) {
-    throw new Error('The report is missing required hardware information. Please run the scanner again.');
-  }
-  return data;
-}
-
-function showReport(data) {
-  importedReport = data;
-  const grid = byId('hardwareGrid');
-  grid.replaceChildren();
-  const mainGpu = data.gpus.find(g => g.name) || {};
-  const memoryModules = Array.isArray(data.memory.modules) ? data.memory.modules : [];
-  const moduleDetail = memoryModules.length ? memoryModules.map(m => `${m.capacityGB || '?'} GB${m.speedMHz ? ` @ ${m.speedMHz} MHz` : ''}`).join(' · ') : '';
-  const storage = Array.isArray(data.storage) ? data.storage : [];
-  const storageText = storage.length ? storage.map(d => `${safeText(d.model, 'Drive')} (${formatGB(d.sizeGB)})`).join(' / ') : 'Not reported';
-  const display = mainGpu.currentResolution || data.display?.resolution || '';
-  const hardware = [
-    ['PROCESSOR', safeText(data.cpu.name), `${data.cpu.cores || '?'} cores · ${data.cpu.logicalProcessors || '?'} threads`],
-    ['GRAPHICS', safeText(mainGpu.name), mainGpu.vramGB ? `${mainGpu.vramGB} GB video memory` : safeText(mainGpu.driverVersion, 'Video adapter detected')],
-    ['MEMORY', formatGB(data.memory.totalGB), moduleDetail],
-    ['OPERATING SYSTEM', safeText(data.os?.name), data.os?.version ? `Version ${data.os.version} · Build ${data.os.build || '—'}` : ''],
-    ['MOTHERBOARD', safeText(data.motherboard?.model), safeText(data.motherboard?.manufacturer, '')],
-    ['STORAGE', storageText, `${storage.length} drive(s) reported`],
-    ['DISPLAY MODE', safeText(display, 'Not reported'), 'Current display mode, when available'],
-    ['SCAN SOURCE', 'Windows read-only scan', data.generatedAt ? new Date(data.generatedAt).toLocaleString() : 'Timestamp unavailable']
-  ];
-  hardware.forEach(([label, value, detail]) => grid.append(makeHardwareItem(label, value, detail)));
-  byId('hardwarePanel').hidden = false;
-  byId('scanStatus').classList.add('status-ready');
-  byId('scanStatusLabel').textContent = 'PC REPORT IMPORTED';
-  byId('scanTimestamp').textContent = 'Report loaded into this browser tab. It is not sent to a server by this website.';
-  byId('hardwareTitle').textContent = safeText(data.cpu.name, 'Detected hardware');
-
-  setSelectToHardware('cpu', data.cpu.name, inferCpuScore(data.cpu.name), CPU_LIST);
-  if (mainGpu.name) setSelectToHardware('gpu', mainGpu.name, inferGpuScore(mainGpu.name), GPU_LIST);
-  const ram = Number(data.memory.totalGB);
-  if (ram > 0) {
-    const closest = [8, 16, 32, 64].reduce((a, b) => Math.abs(b - ram) < Math.abs(a - ram) ? b : a);
-    byId('ram').value = String(closest);
-  }
-  if (display) {
-    const match = String(display).match(/(\d{3,5})\s*[x×]\s*(\d{3,5})/i);
-    if (match) {
-      const height = Number(match[2]);
-      const target = height >= 2000 ? '0.43' : height >= 1300 ? '0.72' : height >= 850 ? '1' : '1.28';
-      byId('resolution').value = target;
-    }
-  }
-  populateGpuCompare(data.gpus.map(g => g.name).filter(Boolean));
-}
-
-async function importReport(file) {
-  if (!file) return;
-  try {
-    const raw = (await file.text()).replace(/^\uFEFF/, '');
-    const data = validateReport(JSON.parse(raw));
-    showReport(data);
-  } catch (error) {
-    byId('scanStatusLabel').textContent = 'COULD NOT READ REPORT';
-    alert(error.message || 'Could not read that JSON file.');
-  }
-}
-
-function populateGpuCompare(detectedNames = []) {
-  const names = [...GPU_LIST.map(g => g.name)];
-  detectedNames.forEach(name => { if (name && !names.some(n => n.toLowerCase() === name.toLowerCase())) names.unshift(name); });
-  ['gpuA', 'gpuB'].forEach((id, index) => {
-    const select = byId(id);
-    const old = select.value;
-    select.replaceChildren();
-    names.forEach(name => {
-      const option = document.createElement('option');
-      option.textContent = name;
-      const ref = GPU_LIST.find(g => g.name.toLowerCase() === name.toLowerCase());
-      option.value = String(ref ? ref.score : inferGpuScore(name));
-      option.dataset.name = name;
-      select.append(option);
-    });
-    if (old && Array.from(select.options).some(o => o.value === old)) select.value = old;
-    else select.selectedIndex = index === 0 ? 0 : Math.min(4, select.options.length - 1);
-  });
-}
-
-function estimateFPS() {
-  const cpuScore = Number(byId('cpu').value);
-  const gpuScore = Number(byId('gpu').value);
-  const ram = Number(byId('ram').value);
-  const resolutionFactor = Number(byId('resolution').value);
-  const qualityFactor = Number(byId('quality').value);
-  const game = GAME_MODELS[byId('game').value];
-  const cpuFactor = clamp(cpuScore / 100, 0.45, 1.55);
-  const gpuFactor = clamp(gpuScore / 100, 0.18, 2.5);
-  const cpuWeighted = cpuFactor * game.cpuWeight + gpuFactor * (1 - game.cpuWeight);
-  const ramFactor = ram < 16 ? 0.82 : ram < 32 ? 1 : 1.015;
-  const estimate = Math.max(5, game.baseline * cpuWeighted * ramFactor * resolutionFactor * qualityFactor);
-  const low = Math.max(3, Math.round(estimate * 0.78 / 5) * 5);
-  const high = Math.max(low + 5, Math.round(estimate * 1.22 / 5) * 5);
-  byId('fpsRange').innerHTML = `${low}–${high} <small>FPS</small>`;
-  const mid = (low + high) / 2;
-  byId('fpsVerdict').textContent = mid >= 120 ? 'Smooth range in this simplified model.' : mid >= 60 ? 'Around 60 FPS or better in this simplified model.' : mid >= 30 ? 'May be playable with settings adjustments.' : 'This combination may struggle at the selected settings.';
-  byId('fpsResult').hidden = false;
-}
-
-function compareGPUs() {
-  const a = byId('gpuA');
-  const b = byId('gpuB');
-  const scoreA = Number(a.value);
-  const scoreB = Number(b.value);
-  const nameA = a.options[a.selectedIndex].dataset.name || a.options[a.selectedIndex].textContent;
-  const nameB = b.options[b.selectedIndex].dataset.name || b.options[b.selectedIndex].textContent;
-  const winner = scoreA === scoreB ? 'These GPUs have the same reference index.' : scoreA > scoreB ? `${nameA} has the higher reference index.` : `${nameB} has the higher reference index.`;
-  const stronger = Math.max(scoreA, scoreB);
-  const weaker = Math.max(1, Math.min(scoreA, scoreB));
-  const difference = Math.round((stronger / weaker - 1) * 100);
-  byId('compareWinner').textContent = winner + (scoreA === scoreB ? '' : ` (${difference}% higher by this index)`);
-  const max = Math.max(scoreA, scoreB, 1);
-  const bars = byId('compareBars');
-  bars.replaceChildren();
-  [[nameA, scoreA, false], [nameB, scoreB, true]].forEach(([name, score, second]) => {
-    const row = document.createElement('div'); row.className = 'bar-row';
-    const label = document.createElement('span'); label.className = 'bar-name'; label.textContent = name;
-    const track = document.createElement('div'); track.className = 'bar-track';
-    const fill = document.createElement('div'); fill.className = `bar-fill${second ? ' second' : ''}`; fill.style.width = `${Math.max(2, score / max * 100)}%`; track.append(fill);
-    const value = document.createElement('span'); value.className = 'bar-score'; value.textContent = score;
-    row.append(label, track, value); bars.append(row);
-  });
-  byId('compareResult').hidden = false;
-}
-
-byId('specFile').addEventListener('change', event => importReport(event.target.files?.[0]));
-byId('clearSpecs').addEventListener('click', () => {
-  importedReport = null; byId('hardwarePanel').hidden = true; byId('scanStatus').classList.remove('status-ready');
-  byId('scanStatusLabel').textContent = 'WAITING FOR YOUR REPORT'; byId('specFile').value = '';
-});
-byId('estimateButton').addEventListener('click', estimateFPS);
-byId('compareButton').addEventListener('click', compareGPUs);
-populateGpuCompare();
+function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function readReport(){try{return JSON.parse(localStorage.getItem('pchub.hardware')||'null')}catch{return null}}
+function saveReport(report){localStorage.setItem('pchub.hardware',JSON.stringify(report));localStorage.setItem('pchub.hardware.updated',new Date().toISOString())}
+function token(){return sessionStorage.getItem('pchub.bridgeToken')||''}
+function ingestToken(){const u=new URL(location.href);const t=u.searchParams.get('bridgeToken');if(t){sessionStorage.setItem('pchub.bridgeToken',t);u.searchParams.delete('bridgeToken');history.replaceState({},'',u.pathname+u.search+u.hash);}return t;}
+async function bridgeFetch(path,options={}){const t=token();if(!t)throw new Error('No one-session companion token found. Run START-PC-HUB.bat again.');const headers={...(options.headers||{}),'X-PC-Hub-Token':t};const res=await fetch(BRIDGE+path,{...options,headers,mode:'cors',cache:'no-store',credentials:'omit'});const body=await res.json().catch(()=>({error:'Invalid response from the local companion.'}));if(!res.ok||body.error)throw new Error(body.error||('Local companion returned '+res.status));return body;}
+function norm(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');}
+function matchGpu(text){const hay=norm(text);const candidates=GPU_DB.filter(g=>{const bare=g.name.replace(/^(GeForce|Radeon)\s+/i,'');const noVram=bare.replace(/\s+\d+GB$/i,'');return hay.includes(norm(g.name))||hay.includes(norm(bare))||hay.includes(norm(noVram));}).sort((a,b)=>b.name.length-a.name.length||a.score-b.score);return candidates[0]||null;}
+function matchCpu(text){const hay=norm(text);const candidates=CPU_DB.filter(c=>{const bare=c.name.replace(/^Core\s+/i,'');return hay.includes(norm(c.name))||hay.includes(norm(bare));}).sort((a,b)=>b.name.length-a.name.length||a.score-b.score);return candidates[0]||null;}
+function setConnection(connected,message){const el=$('connectionState');if(el){el.classList.toggle('connected',!!connected);el.innerHTML='<i></i> '+(connected?'Connected':'Not connected');}const box=$('bridgeMessage');if(box&&message)box.textContent=message;}
+function renderHardware(report){const holder=$('hardwareReport');if(!holder)return;if(!report){holder.innerHTML='<div class="hardware-placeholder"><div class="placeholder-icon">⌁</div><b>No hardware report loaded</b><p>Run the companion to detect your processor, graphics card, RAM, storage and Windows version.</p></div>';return;}const gpu=report.gpus?.[0];const gpuNames=(report.gpus||[]).map(g=>g.name).filter(Boolean).join(' / ');const ram=report.memory?.totalGB;const storage=(report.storage||[]).map(d=>`${d.model||'Drive'} · ${d.sizeGB||'?'} GB`).join('<br>')||'Not detected';const items=[['PROCESSOR',report.cpu?.name||'Not detected',`${report.cpu?.cores??'?'} cores · ${report.cpu?.threads??'?'} threads`],['GRAPHICS CARD',gpuNames||'Not detected',(report.gpus||[]).map(g=>g.vramGB?`${g.name}: ${g.vramGB} GB VRAM`:g.name).join(' / ')||'VRAM unknown'],['SYSTEM MEMORY',ram?`${ram} GB RAM`:'Not detected',(report.memory?.modules||[]).map(m=>m.speedMHz?`${m.capacityGB} GB · ${m.speedMHz} MHz`:`${m.capacityGB} GB`).join(' / ')],['MOTHERBOARD',[report.motherboard?.manufacturer,report.motherboard?.model].filter(Boolean).join(' ')||'Not detected',''],['WINDOWS',report.os?.name||'Not detected',`${report.os?.version||''} · Build ${report.os?.build||'?'}`],['STORAGE',storage,'Model and approximate capacity']];holder.innerHTML=items.map(([label,value,sub])=>`<article class="hardware-item"><small>${escapeHtml(label)}</small><b>${value}</b><span>${sub}</span></article>`).join('');}
+async function scanComputer(){const progress=$('scanProgress');if(progress)progress.classList.add('active');setConnection(false,'Contacting the local Windows companion…');try{const health=await bridgeFetch('/api/specs');if(!health?.ok)throw new Error('The companion did not return a valid hardware report.');saveReport(health);renderHardware(health);setConnection(true,'Hardware detected successfully. Your report is saved in this browser only.');if($('homeSystem')){$('homeSystem').textContent=health.gpus?.map(g=>g.name).join(' / ')||'PC detected';$('homeSystemSub').textContent=health.cpu?.name||'Hardware scan complete';}return true;}catch(e){setConnection(false,e.message);const box=$('bridgeMessage');if(box)box.textContent=e.message+' Make sure START-PC-HUB.bat is running and allow local-network access if your browser asks.';const status=$('gameSearchStatus');if(status)status.textContent=e.message;return false;}finally{if(progress)progress.classList.remove('active');}}
+function setupHeader(){const btn=$('mobileMenu');if(btn)btn.addEventListener('click',()=>$('mainNav')?.classList.toggle('open'));}
+function setupHome(){const report=readReport();if(report){if($('homeSystem'))$('homeSystem').textContent=report.gpus?.[0]?.name||'PC detected';if($('homeSystemSub'))$('homeSystemSub').textContent=report.cpu?.name||'Hardware scan complete';}}
+function setupMyPc(){if(!$('scanNow'))return;const report=readReport();renderHardware(report);if(report)setConnection(true,'A previous scan is saved in this browser. Connect the companion to refresh it.');$('scanNow')?.addEventListener('click',scanComputer);$('stopBridge')?.addEventListener('click',async()=>{try{await bridgeFetch('/api/shutdown',{method:'POST'});setConnection(false,'The local companion has been stopped. Run START-PC-HUB.bat to connect again.');}catch(e){setConnection(false,e.message);}});if(token())bridgeFetch('/api/health').then(()=>setConnection(true,'Local companion is available. Select Scan / refresh my PC.')).catch(()=>{});}
+function setupFeaturedGames(){const holder=$('featuredGames');if(!holder)return;holder.innerHTML=FEATURED.map(([name,id,tag])=>`<button class="suggestion-card" data-appid="${id}" data-name="${escapeHtml(name)}"><small>${escapeHtml(tag.toUpperCase())}</small><b>${escapeHtml(name)}</b><span>View requirements ↗</span></button>`).join('');holder.addEventListener('click',e=>{const card=e.target.closest('[data-appid]');if(card)location.href=`game.html?id=${card.dataset.appid}&name=${encodeURIComponent(card.dataset.name)}`;});}
+function drawGameResults(items){const holder=$('gameResults');if(!holder)return;if(!items?.length){holder.className='game-results empty-results';holder.innerHTML='<div class="empty-orbit">⌕</div><b>No matching store listings found</b><p>Try a shorter title or a different spelling.</p>';return;}holder.className='game-results';holder.innerHTML=items.map(g=>{const id=g.id||g.appid;const image=g.tiny_image||`https://cdn.cloudflare.steamstatic.com/steam/apps/${id}/header.jpg`;return `<article class="game-result-card" data-appid="${id}" data-name="${escapeHtml(g.name)}"><img loading="lazy" src="${escapeHtml(image)}" alt=""><div class="game-result-info"><b>${escapeHtml(g.name)}</b><small>STEAM APP ID · ${id}</small><span>Check my PC compatibility ↗</span></div></article>`;}).join('');holder.querySelectorAll('[data-appid]').forEach(card=>card.addEventListener('click',()=>location.href=`game.html?id=${card.dataset.appid}&name=${encodeURIComponent(card.dataset.name)}`));}
+async function runGameSearch(term){const status=$('gameSearchStatus');if(status)status.textContent='Searching Steam store listings…';$('resultsHeading').textContent=`Results for “${term}”`;$('resultCount').textContent='SEARCHING';try{const data=await bridgeFetch('/api/game-search?q='+encodeURIComponent(term));drawGameResults(data.items||[]);$('resultCount').textContent=`${(data.items||[]).length} RESULTS`;if(status)status.textContent=`Search results from Steam · ${data.total??data.items?.length??0} matches returned for this query.`;}catch(e){if(status)status.textContent=e.message;drawGameResults([]);$('gameResults').innerHTML=`<div class="no-results">${escapeHtml(e.message)}<br><br>Run START-PC-HUB.bat from the downloaded folder, then search again.</div>`;$('resultCount').textContent='OFFLINE';}}
+function setupGames(){setupFeaturedGames();$('gameSearchForm')?.addEventListener('submit',e=>{e.preventDefault();const q=$('gameSearchInput').value.trim();if(q.length<2){$('gameSearchStatus').textContent='Enter at least two characters to search.';return;}runGameSearch(q);});if(new URL(location.href).searchParams.get('scan')==='1'){const u=new URL(location.href);u.searchParams.delete('scan');history.replaceState({},'',u.pathname+u.search+u.hash);scanComputer().then(ok=>{const status=$('gameSearchStatus');if(status&&ok)status.textContent='PC scan complete. Search any Steam game above.';});}else if(token()){bridgeFetch('/api/health').then(()=>{$('gameSearchStatus').textContent='Companion connected. Search any Steam game above.';}).catch(()=>{});}}
+function stripRequirement(html){if(!html)return '';const d=document.createElement('div');d.innerHTML=String(html).replace(/<br\s*\/?\s*>/gi,'\n').replace(/<\/p\s*>/gi,'\n').replace(/<li\b[^>]*>/gi,'\n• ');return (d.textContent||d.innerText||'').replace(/\u00a0/g,' ').replace(/[\t ]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();}
+function extractRequirements(text){const t=String(text||'');const gpu=matchGpu(t);const cpu=matchCpu(t);const ramMatch=t.match(/(?:memory|ram)[^\n:]{0,16}[:\s-]*([0-9]+(?:\.[0-9]+)?)\s*gb/i)||t.match(/([0-9]+(?:\.[0-9]+)?)\s*gb\s*ram/i);const diskMatch=t.match(/([0-9]+(?:\.[0-9]+)?)\s*gb\s*(?:available\s*)?(?:storage|space|free space)/i)||t.match(/(?:storage|disk space)[^\n:]{0,15}[:\s-]*([0-9]+(?:\.[0-9]+)?)\s*gb/i);return{gpu,cpu,ram:ramMatch?Number(ramMatch[1]):null,disk:diskMatch?Number(diskMatch[1]):null};}
+function ratioState(actual,needed){if(actual==null||needed==null)return'unknown';if(actual<needed*.8)return'fail';if(actual<needed)return'unknown';return'pass';}
+function checkItem(label,status,detail){return `<div class="check-item ${status}"><i class="check-indicator"></i><div><b>${escapeHtml(label)} <span class="status-chip ${status}">${status==='pass'?'PASS':status==='fail'?'LOW':status==='unknown'?'CHECK':'N/A'}</span></b><small>${escapeHtml(detail)}</small></div></div>`;}
+function gameGuidance(min,rec,report){if(!report)return{low:"Scan your PC first",medium:"Scan your PC first",high:"Scan your PC first",note:"Run the local hardware scanner to compare your components."};const currentGpu=matchGpu(report.gpus?.map(g=>g.name).join(" ")||"");const currentCpu=matchCpu(report.cpu?.name||"");const ram=Number(report.memory?.totalGB)||null;const grade=(actual,minValue,recValue,mode)=>{if(actual==null||minValue==null)return"unknown";let target=minValue;if(mode==="medium"&&recValue!=null)target=(minValue+recValue)/2;if(mode==="high"&&recValue!=null)target=recValue;if(actual<minValue*.8)return"fail";if(actual<target*.9)return"fail";if(actual<target)return"unknown";if(recValue!=null&&actual>=recValue)return"pass";if(actual>=minValue)return"pass";return"unknown";};const describe=(mode)=>{const gReq=min.gpu?.score??null,cReq=min.cpu?.score??null,rReq=min.ram??null;const g=grade(currentGpu?.score,gReq,rec.gpu?.score??null,mode);const c=grade(currentCpu?.score,cReq,rec.cpu?.score??null,mode);const r=grade(ram,rReq,rec.ram??null,mode);const all=[g,c,r];if(all.includes("fail"))return"Likely below requirements";if(all.every(v=>v==="pass"))return mode==="high"?"Meets recommended tier":"Meets expected tier";if(all.every(v=>v==="unknown"))return"Not enough data";if(all.includes("unknown"))return"Borderline / partial match";return"Partial match — review details";};const anyRecommended=!!(rec.gpu||rec.cpu||rec.ram);return{low:describe("low"),medium:describe("medium"),high:describe("high"),note:`Detected: ${currentGpu?.name||report.gpus?.[0]?.name||"GPU not matched"} · ${currentCpu?.name||report.cpu?.name||"CPU not matched"} · ${ram?ram+" GB RAM":"RAM unknown"}. ${anyRecommended?"Medium/high targets use recommended requirements where they are recognised.":"No recognised recommended specs were published, so the comparison falls back to minimum specs."} These are requirement comparisons, not guaranteed FPS predictions.`};}
+function renderGamePage(data,id){const holder=$('gameDetail');const game=data.data;const minText=stripRequirement(game.pc_requirements?.minimum);const recText=stripRequirement(game.pc_requirements?.recommended);const min=extractRequirements(minText);const rec=extractRequirements(recText);const report=readReport();const guidance=gameGuidance(min,rec,report);const currentGpu=matchGpu(report?.gpus?.map(g=>g.name).join(' ')||'');const currentCpu=matchCpu(report?.cpu?.name||'');const ram=Number(report?.memory?.totalGB)||null;const gpuDetail=(req)=>req.gpu?`${req.gpu.name} (tier ${req.gpu.score})`: 'GPU model not recognised in the database';const cpuDetail=(req)=>req.cpu?`${req.cpu.name} (tier ${req.cpu.score})`:'CPU model not recognised in the database';let checks=[];if(report){checks.push(checkItem('Graphics card',min.gpu&&currentGpu?ratioState(currentGpu.score,min.gpu.score):'unknown',min.gpu?`Your ${currentGpu?.name||report.gpus?.[0]?.name||'GPU'} vs minimum ${gpuDetail(min)}.`:'The minimum GPU could not be identified from the store text.'));checks.push(checkItem('Processor',min.cpu&&currentCpu?ratioState(currentCpu.score,min.cpu.score):'unknown',min.cpu?`Your ${currentCpu?.name||report.cpu?.name||'CPU'} vs minimum ${cpuDetail(min)}.`:'The minimum CPU could not be identified from the store text.'));checks.push(checkItem('System memory',min.ram?ratioState(ram,min.ram):'unknown',min.ram?`Your ${ram??'Unknown'} GB vs minimum ${min.ram} GB RAM.`:'RAM requirement not found in the store text.'));}else checks.push(checkItem('PC scan','unknown','Scan your PC to compare the requirements with your components.'));
+const headerImg=game.header_image||`https://cdn.cloudflare.steamstatic.com/steam/apps/${id}/header.jpg`;holder.className='';holder.innerHTML=`<section class="game-detail-hero reveal"><img class="game-cover" src="${escapeHtml(headerImg)}" alt="${escapeHtml(game.name)}"><div class="game-title-box"><div class="eyebrow">STEAM STORE / PC REQUIREMENTS</div><h1>${escapeHtml(game.name)}</h1><p>${escapeHtml((game.short_description||game.name).replace(/<[^>]*>/g,' ').slice(0,280))}</p><a class="button button-ghost" href="https://store.steampowered.com/app/${id}/" target="_blank" rel="noopener">Open Steam store ↗</a></div></section><section class="compat-panel reveal"><div class="compat-top"><div><div class="eyebrow">YOUR PC COMPATIBILITY</div><h2>Requirement check</h2></div><span class="compat-score">${report?'PC REPORT LOADED':'SCAN REQUIRED'}</span></div><div class="setting-grid"><article class="setting-card low"><span>01 / LOW SETTINGS</span><b>${escapeHtml(guidance.low)}</b><small>Compared with minimum listed system requirements. Lower settings may reduce graphics load.</small></article><article class="setting-card medium"><span>02 / MEDIUM SETTINGS</span><b>${escapeHtml(guidance.medium)}</b><small>General guidance based on the listed minimum requirements.</small></article><article class="setting-card high"><span>03 / HIGH SETTINGS</span><b>${escapeHtml(guidance.high)}</b><small>Compared with recommended requirements where those are published.</small></article></div><p class="muted-note">${escapeHtml(guidance.note)} Exact FPS cannot be derived reliably from minimum/recommended specs alone; this page will not invent a number.</p>${report?`<div class="checklist">${checks.join('')}</div>`:`<div class="inline-notice">Your PC has not been scanned in this browser yet. <a class="text-link" href="my-pc.html">Open My PC →</a></div>`}</section><section class="section-block compact-block reveal"><div class="section-heading"><div><div class="eyebrow">PUBLISHED GAME SPECS</div><h2>System requirements</h2></div><span class="section-index">STORE LISTING</span></div><div class="requirements-grid"><article class="requirements-box"><h3>Minimum requirements</h3><pre>${escapeHtml(minText||'The store listing does not publish minimum PC requirements.')}</pre></article><article class="requirements-box"><h3>Recommended requirements</h3><pre>${escapeHtml(recText||'The store listing does not publish recommended PC requirements.')}</pre></article></div><div class="notice-card"><b>How to read this comparison</b><p>GPU and CPU matches use an approximate relative-tier catalogue. Requirements written in unusual formats may not be recognised, so always compare the original published text. A PASS means the detected model's catalogue tier is at or above the matched requirement tier; it is not a guarantee of smooth gameplay.</p></div></section>`;}
+async function setupGameDetail(){const id=new URL(location.href).searchParams.get('id');const holder=$('gameDetail');if(!id||!/^[0-9]+$/.test(id)){holder.innerHTML='<div class="no-results">No valid Steam App ID was provided. Return to the <a href="games.html">game finder</a>.</div>';return;}try{const d=await bridgeFetch('/api/game-details?id='+id);if(!d.success||!d.data)throw new Error('Steam did not return a store page for this title.');renderGamePage(d,id);document.title=`${d.data.name} requirements — PC Hub`;}catch(e){holder.innerHTML=`<div class="no-results">Could not load this game's requirements.<br>${escapeHtml(e.message)}<br><br>Return to the <a href="games.html">game finder</a> and try again.</div>`;}}
+function gpuOptionLabel(g){return`${g.brand} ${g.name} · ${g.vram}GB`}
+function setupGpuDatabase(){const list=$('gpuList');if(!list)return;const draw=()=>{let items=GPU_DB.filter(g=>(g.name.toLowerCase().includes($('gpuSearch').value.toLowerCase())||g.brand.toLowerCase().includes($('gpuSearch').value.toLowerCase()))&&($('gpuBrand').value==='all'||g.brand===$('gpuBrand').value));const sort=$('gpuSort').value;if(sort==='score')items.sort((a,b)=>b.score-a.score);if(sort==='vram')items.sort((a,b)=>b.vram-a.vram);if(sort==='az')items.sort((a,b)=>a.name.localeCompare(b.name));$('gpuCount').textContent=`${items.length} graphics cards shown · ${GPU_DB.length} in database`;$('gpuList').innerHTML=items.length?items.map(g=>`<article class="hardware-card"><div class="brand-tag">${g.brand.toUpperCase()}</div><h3>${escapeHtml(g.name)}</h3><div class="hardware-meta"><span>${g.vram} GB VRAM</span><span>TIER ${g.score}</span></div><div class="tier-bar"><i style="width:${Math.max(5,g.score/2)}%"></i></div></article>`).join(''):'<div class="no-results">No graphics cards match that search.</div>';};['gpuSearch','gpuBrand','gpuSort'].forEach(id=>$(id)?.addEventListener('input',draw));draw();}
+function setupCpuDatabase(){const list=$('cpuList');if(!list)return;const draw=()=>{let items=CPU_DB.filter(c=>(c.name.toLowerCase().includes($('cpuSearch').value.toLowerCase())||c.brand.toLowerCase().includes($('cpuSearch').value.toLowerCase()))&&($('cpuBrand').value==='all'||c.brand===$('cpuBrand').value));const sort=$('cpuSort').value;if(sort==='score')items.sort((a,b)=>b.score-a.score);if(sort==='cores')items.sort((a,b)=>b.cores-a.cores);if(sort==='az')items.sort((a,b)=>a.name.localeCompare(b.name));$('cpuCount').textContent=`${items.length} processors shown · ${CPU_DB.length} in database`;$('cpuList').innerHTML=items.length?items.map(c=>`<article class="hardware-card"><div class="brand-tag">${c.brand.toUpperCase()}</div><h3>${escapeHtml(c.name)}</h3><div class="hardware-meta"><span>${c.cores} cores · ${c.threads} threads</span><span>TIER ${c.score}</span></div><div class="tier-bar"><i style="width:${Math.max(5,c.score/1.7)}%"></i></div></article>`).join(''):'<div class="no-results">No processors match that search.</div>';};['cpuSearch','cpuBrand','cpuSort'].forEach(id=>$(id)?.addEventListener('input',draw));draw();}
+function setupCompare(){const a=$('compareA');if(!a)return;const options=GPU_DB.map((g,i)=>`<option value="${i}">${escapeHtml(gpuOptionLabel(g))}</option>`).join('');a.innerHTML=options;$('compareB').innerHTML=options;const rx=GPU_DB.findIndex(g=>g.name==='Radeon RX 460');const rtx=GPU_DB.findIndex(g=>g.name==='GeForce RTX 3060 12GB');a.value=String(Math.max(0,rx));$('compareB').value=String(Math.max(0,rtx));$('runCompare').addEventListener('click',()=>{const x=GPU_DB[Number(a.value)],y=GPU_DB[Number($('compareB').value)];const winner=x.score===y.score?'Tie':x.score>y.score?x.name:y.name;const cards=[x,y];$('compareResult').innerHTML=`<div class="compare-output">${cards.map((g,i)=>`<article class="compare-card ${winner===g.name?'winner':''}"><div class="brand-tag">${g.brand.toUpperCase()} · ${i?'GPU B':'GPU A'}</div><h2>${escapeHtml(g.name)}</h2>${winner===g.name?'<span class="winner-tag">HIGHER RELATIVE TIER</span>':''}<div class="big-index">${g.score}</div><div class="compare-stat"><span>Relative tier index</span><b>${g.score}</b></div><div class="compare-stat"><span>Graphics memory</span><b>${g.vram} GB</b></div><div class="compare-stat"><span>Brand</span><b>${g.brand}</b></div><div class="tier-bar"><i style="width:${Math.max(5,g.score/2)}%"></i></div></article>`).join('')}</div>`;});$('runCompare').click();}
+function init(){ingestToken();setupHeader();setupHome();setupMyPc();setupGames();setupGpuDatabase();setupCpuDatabase();setupCompare();if($('gameDetail'))setupGameDetail();}
+document.addEventListener('DOMContentLoaded',init);
