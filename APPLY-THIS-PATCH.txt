@@ -1,0 +1,83 @@
+PC HUB — NO NEW TAB PATCH
+=========================
+
+A) Replace the existing START-PC-HUB.bat with PC-Hub-Scanner.bat from this ZIP.
+   Upload PC-Hub-Scanner.bat to the repository root.
+   It starts the companion but DOES NOT open any URL or browser tab.
+
+B) Edit PC-Companion.ps1:
+Find this block:
+    $providedToken = [string]$headers['x-pc-hub-token']
+    if (-not $providedToken -or -not [string]::Equals($providedToken, $Token, [StringComparison]::Ordinal)) {
+
+Immediately BEFORE that block, insert:
+    if ($path -eq '/api/specs' -and $method -eq 'GET') {
+        Send-Response $stream 200 (Get-PCSpecs) $origin
+        $client.Close(); continue
+    }
+
+This permits only the read-only hardware GET endpoint without the session token.
+The companion still binds only to 127.0.0.1 and rejects requests from origins other than the configured PC Hub website.
+
+C) Edit app.js:
+1. Find the COMPLETE function named scanComputer() and replace it with:
+
+async function scanComputer(){
+ const progress=$('scanProgress');
+ if(progress)progress.classList.add('active');
+ setConnection(false,'Scanning hardware through the local PC Hub companion…');
+ try{
+  const res=await fetch(BRIDGE+'/api/specs',{method:'GET',mode:'cors',cache:'no-store',credentials:'omit'});
+  const report=await res.json().catch(()=>({error:'Invalid response from local scanner.'}));
+  if(!res.ok||!report.ok)throw new Error(report.error||'The local scanner did not return hardware data.');
+  saveReport(report);
+  renderHardware(report);
+  setConnection(true,'PC detected successfully. Hardware is saved in this browser.');
+  if($('homeSystem'))$('homeSystem').textContent=report.gpus?.map(g=>g.name).join(' / ')||'PC detected';
+  if($('homeSystemSub'))$('homeSystemSub').textContent=report.cpu?.name||'Hardware scan complete';
+  return true;
+ }catch(e){
+  setConnection(false,e.message);
+  const box=$('bridgeMessage');
+  if(box)box.textContent=e.message+' Run PC-Hub-Scanner.bat, then keep this PC Hub tab open.';
+  return false;
+ }finally{if(progress)progress.classList.remove('active');}
+}
+
+2. Find the COMPLETE function setupMyPc() and replace it with:
+
+function setupMyPc(){
+ if(!$('scanNow'))return;
+ renderHardware(readReport());
+ $('scanNow')?.addEventListener('click',scanComputer);
+ $('stopBridge')?.addEventListener('click',()=>{
+  setConnection(false,'Close the PC Hub Scanner command window to stop the companion.');
+ });
+ let scanStarted=false;
+ const checkScanner=async()=>{
+  if(scanStarted)return;
+  try{
+   const r=await fetch(BRIDGE+'/api/health',{method:'GET',mode:'cors',cache:'no-store',credentials:'omit'});
+   if(!r.ok)return;
+   scanStarted=true;
+   setConnection(true,'Scanner detected. Reading your PC hardware…');
+   await scanComputer();
+  }catch(_){}
+ };
+ checkScanner();
+ window.setInterval(checkScanner,2000);
+}
+
+3. Remove the old setupMyPc() code that checks token() or calls bridgeFetch('/api/health').
+   The replacement above already removes that old token requirement from the My PC page.
+
+D) Keep the website open on My PC before running the BAT.
+   The already-open page checks localhost every 2 seconds. Once the BAT starts the companion,
+   that same tab detects it and scans. No browser tab is opened by the BAT.
+
+IMPORTANT:
+- This patch does not use the System Requirements Lab EXE. That third-party program sends results to its own service.
+- It uses the PC Hub PowerShell companion already in your repository.
+- The companion's Steam search/game-details endpoints still use the session token and are not changed by this hardware-only patch.
+- If the browser asks to allow local network access, allow it for the PC Hub website.
+- I have prepared the exact code changes but cannot test the Windows browser permission prompt on your PC from here.
